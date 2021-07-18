@@ -4,6 +4,20 @@ This document introduces a technique for extracting multiple numbers
 in any range from a single hash function result, while optimizing for various
 uniformity properties.
 
+* [Introduction](#introduction)
+  + [The fast range reduction](#the-fast-range-reduction)
+  + [Maximally uniform distributions](#maximally-uniform-distributions)
+* [Generalizing to multiple outputs](#generalizing-to-multiple-outputs)
+  + [Splitting the hash in two](#splitting-the-hash-in-two)
+  + [Transforming the hash](#transforming-the-hash)
+  + [Extracting and updating the state](#extracting-and-updating-the-state)
+  + [Fixing individual uniformity](#fixing-individual-uniformity)
+  + [Avoiding the need to decompose *n*](#avoiding-the-need-to-decompose--n-)
+  + [C version](#c-version)
+* [Use as a random number generator?](#use-as-a-random-number-generator-)
+* [Conclusion](#conclusion)
+* [Acknowledgement](#acknowledgement)
+
 ## Introduction
 
 ### The fast range reduction
