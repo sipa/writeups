@@ -466,23 +466,58 @@ uint32_t extract4(uint32_t *x, uint32_t n) {
 }
 ```
 
-for *B=32*. An equivalent *B=64* version is possible if the compiler supports 64×64→128 multiplications. If not,
-a version with *B=64* bits but 32-bit ranges can be implemented using the code below. For a variant that also supports
-64-bit ranges one needs generic big integer multiplication code. See [this snippet](https://stackoverflow.com/a/26855440)
-for an example of that.
+for *B=32*. A version supporting *B=64* hashes but restricted to 32-bit ranges can be written as:
 
 ```c
 uint32_t extract4(uint64_t *x, uint32_t n) {
+#if defined(UINT128_MAX) || defined(__SIZEOF_INT128__)
+    unsigned __int128 tmp = (unsigned __int128)(*x) * n;
+    uint32_t out = tmp >> 64;
+    *x = tmp | (out & (n-1) & ~n);
+    return out;
+#else
     uint64_t x_val = *x;
     uint64_t t_hi = (x_val >> 32) * (uint64_t)n;
     uint64_t t_lo = (x_val & 0xffffffff) * (uint64_t)n;
     uint64_t mid33 = (t_lo >> 32) + (t_hi & 0xffffffff);
-    uint32_t upper64 = (t_hi >> 32) + (mid33 >> 32);
+    uint32_t upper32 = (t_hi >> 32) + (mid33 >> 32);
     uint64_t lower64 = (mid33 << 32) | (t_lo & 0xffffffff);
-    *x = lower64 | (upper64 & (n-1) & ~n);
-    return upper64;
+    *x = lower64 | (upper32 & (n-1) & ~n);
+    return upper32;
+#endif
 }
 ```
+
+which makes use of a 64×64→128 multiplication if the platform supports `__int128`. If 64-bit ranges are
+needed, a full double-limb multiplication is needed. The code is based on [this snippet](https://stackoverflow.com/a/26855440):
+
+```c
+uint64_t extract4(uint64_t *x, uint64_t n) {
+#if defined(UINT128_MAX) || defined(__SIZEOF_INT128__)
+    unsigned __int128 tmp = (unsigned __int128)(*x) * n;
+    uint64_t out = tmp >> 64;
+    *x = tmp | (out & (n-1) & ~n);
+    return out;
+#else
+    uint64_t x_val = *x;
+    uint64_t x_hi = x_val >> 32, x_lo = x_val & 0xffffffff;
+    uint64_t n_hi = y >> 32, n_lo = y & 0xffffffff;
+    uint64_t hh = x_hi * n_hi;
+    uint64_t hl = x_hi * n_lo;
+    uint64_t lh = x_lo * n_hi;
+    uint64_t ll = x_lo * n_lo;
+    uint64_t mid34 = (ll >> 32) + (lh & 0xffffffff) + (hl & 0xffffffff);
+    uint64_t upper64 = hh + (lh >> 32) + (hl >> 32) + (mid34 >> 32);
+    uint64_t lower64 = (mid34 << 32) | (ll & 0xffffffff);
+    *x = lower64 | (upper64 & (n-1) & ~n);
+    return upper64;
+#endif
+}
+```
+
+Note that for the final extraction it is unnecessary to update the state further, and the normal fast range
+reduction *extract* function can be used instead. It is identical to the above routines, but with the `*x =` line
+and (if present) the `uint64_t lower64 =` line removed.
 
 ## Use as a random number generator?
 
