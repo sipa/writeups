@@ -16,7 +16,7 @@ uniformity properties.
   + [C version](#c-version)
 * [Use as a random number generator?](#use-as-a-random-number-generator-)
 * [Conclusion](#conclusion)
-* [Acknowledgement](#acknowledgement)
+* [Acknowledgment](#acknowledgment)
 
 ## Introduction
 
@@ -42,7 +42,7 @@ def fastrange(x, n):
 This function has an interesting property: if *x* is uniformly distributed in
 *[0,2<sup>B</sup>)*, then *fastrange(x,n)* (for any non-zero *n*) will be as close to
 uniform as *(x mod n)* is. The latter is often used in hash table implementations, but
-relatively slow on modern CPUs. As *fastrange(x,n)* is just as uniform, it's a great
+relatively slow on modern CPU's. As *fastrange(x,n)* is just as uniform, it's a great
 drop-in replacement for the modulo reduction. Note that it doesn't behave **identically** to that; it
 just has a similar distribution, and that's all we need.
 
@@ -341,7 +341,7 @@ variable has less entropy than *x<sub>1</sub>*, which in turn results in non-max
 To address that, we must prevent the degeneration of the quality of the state variables (each *x<sub>i</sub>*).
 We already know that even ranges cause a loss of entropy in the state, and that is in fact the only cause.
 Whenever the range *n<sub>i</sub>* is odd, the operation *x<sub>i+1</sub> = x<sub>i</sub>n<sub>i</sub> mod 2<sup>B</sup>* is
-a bijection. Because the [gcd](https://en.wikipedia.org/wiki/Greatest_common_divisor) of an odd number and
+a bijection. Because the [GCD](https://en.wikipedia.org/wiki/Greatest_common_divisor) of an odd number and
 *2<sup>B</sup>* is *1*, every odd number has a [modular inverse](https://en.wikipedia.org/wiki/Modular_multiplicative_inverse) modulo *2<sup>B</sup>*, and thus this
 multiplication operation can be undone by multiplying with this inverse. That implies no entropy can be lost by this operation.
 
@@ -566,9 +566,9 @@ Because of this, it is inadvisable to do extractions whose ranges multiply to a 
 ## Conclusion
 
 We've constructed a simple and efficient generalization to multiple outputs of the fast range reduction method,
-in a way that maximizes uniformity properties both for the indivdually extracted numbers and their joint distribution.
+in a way that maximizes uniformity properties both for the individually extracted numbers and their joint distribution.
 
-## Acknowledgement
+## Acknowledgment
 
 Thanks for Greg Maxwell for several discussions that lead to this idea, as well as proofreading and suggesting
 improvements to the text.
