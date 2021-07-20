@@ -32,7 +32,7 @@ but for presentation purposes I'm going to use Python here.
 B = 32
 MASK = 2**B - 1
 
-def extract(x, n):
+def fastrange(x, n):
     """Map x in [0,2**B) to output in [0,n)."""
     assert 0 <= x <= MASK
     assert 0 < n
@@ -40,9 +40,9 @@ def extract(x, n):
 ```
 
 This function has an interesting property: if *x* is uniformly distributed in
-*[0,2<sup>B</sup>)*, then *extract(x,n)* (for any non-zero *n*) will be as close to
+*[0,2<sup>B</sup>)*, then *fastrange(x,n)* (for any non-zero *n*) will be as close to
 uniform as *(x mod n)* is. The latter is often used in hash table implementations, but
-relatively slow on modern CPUs. As *extract(x,n)* is just as uniform, it's a great
+relatively slow on modern CPUs. As *fastrange(x,n)* is just as uniform, it's a great
 drop-in replacement for the modulo reduction. Note that it doesn't behave **identically** to that; it
 just has a similar distribution, and that's all we need.
 
@@ -62,7 +62,7 @@ uniform distribution itself is maximally uniform.
 
 To reach such a maximally uniform distribution, it suffices that the function from the hash has the property
 that every output can be reached from either exactly *&LeftFloor;2<sup>B</sup>/n&RightFloor;*
-inputs, or exactly *&LeftCeil;2<sup>B</sup>/n&RightCeil;*. This is the case for both *x mod n* and *extract(x,n)*.
+inputs, or exactly *&LeftCeil;2<sup>B</sup>/n&RightCeil;*. This is the case for both *x mod n* and *fastrange(x,n)*.
 
 ## Generalizing to multiple outputs
 
@@ -73,23 +73,23 @@ variations (such as [Cuckoo Filters](https://en.wikipedia.org/wiki/Cuckoo_filter
 hash of each data element are needed.
 
 It's of course possible to compute multiple hashes,
-for example using prefixes like *x<sub>i</sub> = H(i || input)*, and using *extract* on each.
+for example using prefixes like *x<sub>i</sub> = H(i || input)*, and using *fastrange* on each.
 Increasing the number of hash function invocations comes with computational cost, however, and
 furthermore **feels** unnecessary, especially when *n<sub>1</sub>n<sub>2</sub> &leq; 2<sup>B</sup>*.
 Can we avoid it?
 
 ### Splitting the hash in two
 
-Another possibility is simply splitting the hash into two smaller hashes, and applying *extract*
+Another possibility is simply splitting the hash into two smaller hashes, and applying *fastrange*
 on each. Here is the resulting distribution you'd get, starting from a (for demonstration
 purposes very small) *8*-bit hash, extracting numbers in ranges *n<sub>1</sub> = 6* and
-*n<sub>2</sub> = 10* from the bottom and top *4* bits using *extract*:
+*n<sub>2</sub> = 10* from the bottom and top *4* bits using *fastrange*:
 
 ```python
 x = hash(...)
 B = 4
-out1 = extract(x & 15, 6)
-out2 = extract(x >> 4, 10)
+out1 = fastrange(x & 15, 6)
+out2 = fastrange(x >> 4, 10)
 ```
 
 <table>
@@ -145,13 +145,13 @@ in each row can only differ by one.
 ### Transforming the hash
 
 Alternatively, it is possible to apply a transformation to the output of the hash function, and then to feed
-both the transformed and untransformed hash to *extract*. The Knuth multiplicative hash (multiplying
+both the transformed and untransformed hash to *fastrange*. The Knuth multiplicative hash (multiplying
 by a large randomish odd constant modulo *2<sup>B</sup>*) is a popular choice. Redoing our example, we get:
 
 ```python
 x = hash(...)
-out1 = extract(x, 6)
-out2 = extract((x * 173) & 0xFF, 10)
+out1 = fastrange(x, 6)
+out2 = fastrange((x * 173) & 0xFF, 10)
 ```
 
 <table>
@@ -255,14 +255,14 @@ joint distribution shows that the per-cell hash distribution isn't maximally uni
 ### Extracting and updating the state
 
 Turns out, it is easy to make the joint distribution maximally uniform. It is possible to create a variant
-of *extract* that doesn't just return a number in the desired range, but also returns an updated
+of *fastrange* that doesn't just return a number in the desired range, but also returns an updated
 "hash" (which I'll call **state** in what follows) which is ready to be used for further extractions. The idea is that this updating should
 move the unused portion of the entropy in that hash to the top bits, so that the next extraction
 will primarily use those. And we effectively already have that: the bottom bits of `tmp`, which
 aren't returned as output, are exactly that.
 
 ```python
-def extract2(x, n):
+def fastrange2(x, n):
     """Given x in [0,2**B), return out in [0,n) and new x."""
     assert 0 <= x <= MASK
     assert 0 < n
@@ -273,8 +273,8 @@ def extract2(x, n):
 
 # Usage
 x1 = hash(...)
-out1, x2 = extract2(x1, n1)
-out2, _  = extract2(x2, n2)
+out1, x2 = fastrange2(x1, n1)
+out2, _  = fastrange2(x2, n2)
 ```
 
 I don't have a proof, but it can be verified exhaustively for small values of *B*, *n1*, and *n2*
@@ -346,7 +346,7 @@ a bijection. Because the [gcd](https://en.wikipedia.org/wiki/Greatest_common_div
 multiplication operation can be undone by multiplying with this inverse. That implies no entropy can be lost by this operation.
 
 Let's restrict the problem to **just** powers of two: what if *n<sub>i</sub> = 2<sup>r<sub>i</sub></sup>*? In this case,
-*extract<sub>2</sub>* is equivalent to returning the top *r<sub>i</sub>* bits of *x<sub>i</sub>* as output, and the bottom *(B-r<sub>i</sub>)* bits of it
+*fastrange<sub>2</sub>* is equivalent to returning the top *r<sub>i</sub>* bits of *x<sub>i</sub>* as output, and the bottom *(B-r<sub>i</sub>)* bits of it
 (left shifted by *r<sub>i</sub>* positions) as new state. This left shift destroys information, but we can simply replace it
 by a left rotation: that brings the same identical bits to the top and thus maintains the maximal joint uniformity
 property, but also leaves all the entropy in the state intact.
@@ -361,7 +361,7 @@ def rotl(x, n):
     """Bitwise left rotate x by n positions."""
     return ((x << n) | (x >> (B - n))) & MASK
 
-def extract3(x, k, r):
+def fastrange3(x, k, r):
     """Given x in [0,2**B), return output in [0,k*2**r) and new x."""
     assert 0 <= x <= MASK
     assert k & 1
@@ -372,7 +372,7 @@ def extract3(x, k, r):
     return out, new_x
 ```
 
-The output is the same as *extract* and *extract<sub>2</sub>*, but the new state differs: instead of having *r* 0-bits
+The output is the same as *fastrange* and *fastrange<sub>2</sub>*, but the new state differs: instead of having *r* 0-bits
 in the bottom, those bits are now obtained by rotating *kx*. The top bits are unchanged.
 
 This is clearly a bijection, as both multiplying with *k* (mod *2<sup>B</sup>*), and rotations are bijections.
@@ -428,17 +428,17 @@ any **consecutively** extracted values appear to be maximally uniform.
 
 ### Avoiding the need to decompose *n*
 
-The above *extract<sub>3</sub>* function works great, but it requires passing in the desired range of outputs in decomposed *2<sup>r</sup>k*
+The above *fastrange<sub>3</sub>* function works great, but it requires passing in the desired range of outputs in decomposed *2<sup>r</sup>k*
 form. This is slightly annoying, and it can be avoided.
 
-Consider what is happening. *extract<sub>3</sub>* behaves the same as *extract<sub>2</sub>* (with *n = 2<sup>r</sup>k*), except that the bottom *r*
+Consider what is happening. *fastrange<sub>3</sub>* behaves the same as *fastrange<sub>2</sub>* (with *n = 2<sup>r</sup>k*), except that the bottom *r*
 bits of the new state are filled in, and not (necessarily) 0. Those bits are the result of rotating *xk* by *r* positions,
 or put otherwise, the top *r* bits of *xk mod 2<sup>B</sup>*, and thus bits *B...(B+r-1)* of *x2<sup>r</sup>k = xn*, or,
 the bottom *r* bits of *&LeftFloor;xn / 2<sup>B</sup>&RightFloor; = out*.
-In other words, the bottom *r* bits of the output are copied into the new state. So we could write an identical *extract<sub>3</sub>* as:
+In other words, the bottom *r* bits of the output are copied into the new state. So we could write an identical *fastrange<sub>3</sub>* as:
 
 ```python3
-def extract3(x, k, r):
+def fastrange3(x, k, r):
     """Given x in [0,2**B), return output in [0,k*2**r) and new x."""
     assert 0 <= x <= MASK
     assert k & 1
@@ -453,11 +453,11 @@ def extract3(x, k, r):
 
 This almost avoids the need to know *r*, except for the need to construct the bitmask `(1 << r) - 1` = *2<sup>r</sup> - 1*.
 This can be done very efficiently using a bit fiddling hack: `(n-1) & ~n`; that's identical to *(1 << r) - 1*, where *r* is
-the number of consecutive zero bits in *n*, starting at the bottom. Put all together we can write a new *extract<sub>4</sub>* function
-that behaves exactly like *extract<sub>3</sub>*, but just takes *n* as input directly:
+the number of consecutive zero bits in *n*, starting at the bottom. Put all together we can write a new *fastrange<sub>4</sub>* function
+that behaves exactly like *fastrange<sub>3</sub>*, but just takes *n* as input directly:
 
 ```python
-def extract4(x, n):
+def fastrange4(x, n):
     """Given x in [0,2**B), return output in [0,n) and new x."""
     assert 0 <= x < MASK
     assert 0 < n <= MASK
@@ -472,7 +472,7 @@ def extract4(x, n):
 I've used Python above for demonstration purposes, but this is of course easily translated to C or similar low-level languages:
 
 ```c
-uint32_t extract4(uint32_t *x, uint32_t n) {
+uint32_t fastrange4(uint32_t *x, uint32_t n) {
     uint64_t tmp = (uint64_t)*x * (uint64_t)n;
     uint32_t out = tmp >> 32;
     *x = tmp | (out & (n-1) & ~n);
@@ -483,7 +483,7 @@ uint32_t extract4(uint32_t *x, uint32_t n) {
 for *B=32*. A version supporting *B=64* hashes but restricted to 32-bit ranges can be written as:
 
 ```c
-uint32_t extract4(uint64_t *x, uint32_t n) {
+uint32_t fastrange4(uint64_t *x, uint32_t n) {
 #if defined(UINT128_MAX) || defined(__SIZEOF_INT128__)
     unsigned __int128 tmp = (unsigned __int128)(*x) * n;
     uint32_t out = tmp >> 64;
@@ -506,7 +506,7 @@ which makes use of a 64×64→128 multiplication if the platform supports `__int
 needed, a full double-limb multiplication is needed. The code is based on [this snippet](https://stackoverflow.com/a/26855440):
 
 ```c
-uint64_t extract4(uint64_t *x, uint64_t n) {
+uint64_t fastrange4(uint64_t *x, uint64_t n) {
 #if defined(UINT128_MAX) || defined(__SIZEOF_INT128__)
     unsigned __int128 tmp = (unsigned __int128)(*x) * n;
     uint64_t out = tmp >> 64;
@@ -530,7 +530,7 @@ uint64_t extract4(uint64_t *x, uint64_t n) {
 ```
 
 Note that for the final extraction it is unnecessary to update the state further, and the normal fast range
-reduction *extract* function can be used instead. It is identical to the above routines, but with the `*x =` line
+reduction *fastrange* function can be used instead. It is identical to the above routines, but with the `*x =` line
 and (if present) the `uint64_t lower64 =` line removed.
 
 ## Use as a random number generator?
