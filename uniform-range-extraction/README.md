@@ -16,7 +16,7 @@ uniformity properties.
   + [C version](#c-version)
 * [Use as a random number generator?](#use-as-a-random-number-generator-)
 * [Conclusion](#conclusion)
-* [Acknowledgment](#acknowledgment)
+* [Acknowledgments](#acknowledgments)
 
 ## Introduction
 
@@ -491,11 +491,10 @@ uint32_t fastrange4(uint64_t *x, uint32_t n) {
     return out;
 #else
     uint64_t x_val = *x;
-    uint64_t t_hi = (x_val >> 32) * (uint64_t)n;
     uint64_t t_lo = (x_val & 0xffffffff) * (uint64_t)n;
-    uint64_t mid33 = (t_lo >> 32) + (t_hi & 0xffffffff);
-    uint32_t upper32 = (t_hi >> 32) + (mid33 >> 32);
-    uint64_t lower64 = (mid33 << 32) | (t_lo & 0xffffffff);
+    uint64_t t_hi = (x_val >> 32) * (uint64_t)n + (t_lo >> 32);
+    uint32_t upper32 = t_hi >> 32;
+    uint64_t lower64 = (t_hi << 32) | (t_lo & 0xffffffff);
     *x = lower64 | (upper32 & (n-1) & ~n);
     return upper32;
 #endif
@@ -568,7 +567,7 @@ Because of this, it is inadvisable to do extractions whose ranges multiply to a 
 We've constructed a simple and efficient generalization to multiple outputs of the fast range reduction method,
 in a way that maximizes uniformity properties both for the individually extracted numbers and their joint distribution.
 
-## Acknowledgment
+## Acknowledgments
 
 Thanks for Greg Maxwell for several discussions that lead to this idea, as well as proofreading and suggesting
-improvements to the text.
+improvements to the text. Thanks to Russell O'Connor for improving the mixed 64/32-bit C function.
