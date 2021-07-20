@@ -53,7 +53,7 @@ uniformly distributed over *2<sup>B</sup>* possible values, and obtaining our
 output by applying a deterministic function to *n* outputs, the probability of every
 output must be a multiple of *2<sup>-B</sup>*. With that constraint, the distribution
 closest to uniform is one that has *2<sup>B</sup> mod n* values with probability
-*&LeftCeil;2<sup>B</sup>/n&RightCeil;/2<sup>B</sup>* each, and
+*&LeftCeiling;2<sup>B</sup>/n&RightCeiling;/2<sup>B</sup>* each, and
 *n - (2<sup>B</sup> mod n)* values with probability
 *&LeftFloor;2<sup>B</sup>/n&RightFloor;/2<sup>B</sup>* each. We will call such
 distributions **maximally uniform**, with the parameters *B* and *n* implicit
@@ -62,7 +62,7 @@ uniform distribution itself is maximally uniform.
 
 To reach such a maximally uniform distribution, it suffices that the function from the hash has the property
 that every output can be reached from either exactly *&LeftFloor;2<sup>B</sup>/n&RightFloor;*
-inputs, or exactly *&LeftCeil;2<sup>B</sup>/n&RightCeil;*. This is the case for both *x mod n* and *fastrange(x,n)*.
+inputs, or exactly *&LeftCeiling;2<sup>B</sup>/n&RightCeiling;*. This is the case for both *x mod n* and *fastrange(x,n)*.
 
 ## Generalizing to multiple outputs
 
