@@ -23,10 +23,10 @@ uniformity properties.
 ### The fast range reduction
 
 In [this post](https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/)
-by Daniel Lemire, a fast method is described to extract a single number in range *[0,n)*, given
-a *B*-bits hash *x*. The technique is primarily aimed at low-level languages where the cost
-of a single modulus in a tight loop may already matter, but for presentation purposes I'm
-going to use Python here.
+by Daniel Lemire, a fast method is described to map a *B*-bits hash *x* to a number in range *[0,n)*.
+Such an operation is needed for example to convert the output of a hash function to a hash table index.
+The technique is primarily aimed at low-level languages where the cost of this operation may already matter,
+but for presentation purposes I'm going to use Python here.
 
 ```python
 B = 32
@@ -41,9 +41,9 @@ def extract(x, n):
 
 This function has an interesting property: if *x* is uniformly distributed in
 *[0,2<sup>B</sup>)*, then *extract(x,n)* (for any non-zero *n*) will be as close to
-uniform as *x mod n* is. As this modulo based reduction is typically used for selecting
-hash table buckets from a hash function output, this *extract* function is a great
-drop-in replacement. Note that it doesn't behave **identically** to modulo reduction; it
+uniform as *(x mod n)* is. The latter is often used in hash table implementations, but
+relatively slow on modern CPUs. As *extract(x,n)* is just as uniform, it's a great
+drop-in replacement for the modulo reduction. Note that it doesn't behave **identically** to that; it
 just has a similar distribution, and that's all we need.
 
 ### Maximally uniform distributions
@@ -53,7 +53,7 @@ uniformly distributed over *2<sup>B</sup>* possible values, and obtaining our
 output by applying a deterministic function to *n* outputs, the probability of every
 output must be a multiple of *2<sup>-B</sup>*. With that constraint, the distribution
 closest to uniform is one that has *2<sup>B</sup> mod n* values with probability
-*(&LeftFloor;2<sup>B</sup>/n&RightFloor;+1)/2<sup>B</sup>* each, and
+*&LeftCeil;2<sup>B</sup>/n&RightCeil;/2<sup>B</sup>* each, and
 *n - (2<sup>B</sup> mod n)* values with probability
 *&LeftFloor;2<sup>B</sup>/n&RightFloor;/2<sup>B</sup>* each. We will call such
 distributions **maximally uniform**, with the parameters *B* and *n* implicit
@@ -62,7 +62,7 @@ uniform distribution itself is maximally uniform.
 
 To reach such a maximally uniform distribution, it suffices that the function from the hash has the property
 that every output can be reached from either exactly *&LeftFloor;2<sup>B</sup>/n&RightFloor;*
-inputs, or exactly one more. This is the case for both *x mod n* and *extract(x,n)*.
+inputs, or exactly *&LeftCeil;2<sup>B</sup>/n&RightCeil;*. This is the case for both *x mod n* and *extract(x,n)*.
 
 ## Generalizing to multiple outputs
 
@@ -70,7 +70,7 @@ But what if we want multiple independent outputs, say both a number in range *[0
 and a number in range *[0,n<sub>2</sub>)*? This problem appears in certain hash table
 variations (such as [Cuckoo Filters](https://en.wikipedia.org/wiki/Cuckoo_filter) and
 [Ribbon Filters](https://arxiv.org/abs/2103.02515)), where both a table position and another
-hash of each data elements are needed.
+hash of each data element are needed.
 
 It's of course possible to compute multiple hashes,
 for example using prefixes like *x<sub>i</sub> = H(i || input)*, and using *extract* on each.
