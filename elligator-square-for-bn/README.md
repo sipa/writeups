@@ -95,7 +95,7 @@ on the curve, while *q<sub>3</sub>(0)* is not defined (division by zero).
 With that, the function *f(u)* can be defined as follows:
 * Compute *x<sub>1</sub> = q<sub>1</sub>(u<sup>2</sup>)*, *x<sub>2</sub> = q<sub>2</sub>(u<sup>2</sup>)*, *x<sub>3</sub> = q<sub>3</sub>(u<sup>2</sup>)*
 * Let *x* be the first of *{x<sub>1</sub>,x<sub>2</sub>,x<sub>3</sub>}* that's a valid X coordinate on *E* (i.e., *g(x)* is square).
-* Let *y* be the square root of *g(x)* whose parity equals that of *t* (every nonzero square mod *P* has two distinct roots, negations of each other, of which one is even and one which is odd).
+* Let *y* be the square root of *g(x)* whose parity equals that of *u* (every nonzero square mod *P* has two distinct roots, negations of each other, of which one is even and one which is odd).
 * Return *(x,y)*.
 
 This function meets all our requirements. It maps every field element to a curve point, around *56.25%* of curve points are reached, no point has more
@@ -262,7 +262,7 @@ def r(Q,i):
                 return None # Would roundtrip through q1 instead of q2.
             # On the next line, t1 cannot be 0, because in that case z = c1, or
             # x = c2, or x1 == c3, and c3 is a valid X coordinate on the curve
-            # (c1**3 + b == 1+b which is square), so the roundtrip check above
+            # (c3**3 + b == 1+b which is square), so the roundtrip check above
             # already catches this.
             u = sqrt((1+b)*t2/t1)
     else: # i == 3 or i == 4
