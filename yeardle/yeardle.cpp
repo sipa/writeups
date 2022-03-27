@@ -151,10 +151,10 @@ public:
 /** Possible responses that can come out of Yeardle. */
 const std::pair<RangeSet, std::string> CLASSES[6] = {
    {{0, 0}, "0"},
-   {{-2, -1, 1, 2}, "1-2"},
-   {{-10, -3, 3, 10}, "3-10"},
-   {{-40, -11, 11, 40}, "11-40"},
-   {{-200, -41, 41, 200}, "41-200"},
+   {{-2, -1, 1, 2}, "1+"},
+   {{-10, -3, 3, 10}, "3+"},
+   {{-40, -11, 11, 40}, "11+"},
+   {{-200, -41, 41, 200}, "41+"},
    {{-10000, -201, 201, 10000}, "200+"}
 };
 
@@ -231,24 +231,30 @@ std::pair<int, int> Analyze(RangeSet x, Cache& cache) {
     return ret;
 }
 
-/** Print out a decision tree for x. */
-void Print(const RangeSet& x, Cache& cache, std::string desc, int rec = 0) {
-    for (int i = 0; i < rec; ++i) printf("  ");
-    printf("* ");
-    if (desc.size() != 0) printf("%s: ", desc.c_str());
+/** Print out a markdown decision tree for x. */
+void Print(const RangeSet& x, Cache& cache, const std::string& desc, int rec = 0) {
     auto [moves, guess] = Analyze(x, cache);
-    if (moves == 0) {
-        printf("%s\n", x.ToString().c_str());
-        return;
+    if (rec == 0) {
+        printf("\n");
+        printf("### %i-guess decision tree for set [%s]\n", moves, x.ToString().c_str());
+        printf("\n");
     } else {
-        printf("[%s] (%i steps)\n", x.ToString().c_str(), moves);
+        for (int i = 1; i < rec; ++i) printf("  ");
+        printf("*");
     }
-    for (const auto& [cls, str] : CLASSES) {
-        RangeSet res = cls;
-        res += guess;
-        RangeSet com = x & res;
-        if (com) {
-            Print(com, cache, "g(" + std::to_string(guess) + ")=" + str, rec + 1);
+    printf("<sup><sub>%s</sub></sup>", desc.c_str());
+    if (desc.size()) printf(": ");
+    if (moves == 0) {
+        printf("solution %s\n", x.ToString().c_str());
+    } else {
+        printf("range [%s]: guess %i\n", x.ToString().c_str(), guess);
+        for (const auto& [cls, str] : CLASSES) {
+            RangeSet res = cls;
+            res += guess;
+            RangeSet com = x & res;
+            if (com) {
+                Print(com, cache, desc + " g(" + std::to_string(guess) + ")=" + str, rec + 1);
+            }
         }
     }
 }
@@ -263,7 +269,7 @@ int main(void) {
     int n = 0;
     while (true) {
         Print({0, n++}, cache, "", 0);
-        printf("# Cache size: %lu\n\n", (unsigned long)cache.size());
+        printf("\nCache size: %lu\n", (unsigned long)cache.size());
     }
 
     return 0;
