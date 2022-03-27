@@ -238,11 +238,9 @@ void Print(const RangeSet& x, Cache& cache, const std::string& desc, int rec = 0
         printf("\n");
         printf("### %i-guess decision tree for set [%s]\n", moves, x.ToString().c_str());
         printf("\n");
-    } else {
-        for (int i = 1; i < rec; ++i) printf("  ");
-        printf("*");
     }
-    printf("<sup><sub>%s</sub></sup>", desc.c_str());
+    for (int i = 0; i < rec; ++i) printf("  ");
+    printf("* %s", desc.c_str());
     if (desc.size()) printf(": ");
     if (moves == 0) {
         printf("solution %s\n", x.ToString().c_str());
@@ -253,7 +251,7 @@ void Print(const RangeSet& x, Cache& cache, const std::string& desc, int rec = 0
             res += guess;
             RangeSet com = x & res;
             if (com) {
-                Print(com, cache, desc + " g(" + std::to_string(guess) + ")=" + str, rec + 1);
+                Print(com, cache, desc + (desc.size() ? " " : "") + "g(" + std::to_string(guess) + ")=" + str, rec + 1);
             }
         }
     }
