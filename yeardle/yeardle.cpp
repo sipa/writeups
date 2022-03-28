@@ -177,11 +177,11 @@ std::pair<int, int> AnalyzeInner(const RangeSet& x, Cache& cache) {
     // Loop over the possible values in [0,n], from the middle out.
     // (dev = distance from mid, sgn = right or left).
     int mid = max / 2;
-    for (int dev = 0; dev <= max - mid; ++dev) {
+    for (int dev = 0; (dev <= max - mid) || (dev <= mid); ++dev) {
         for (int sgn = 0; sgn < 2; ++sgn) {
             // Skip uninteresting values.
             if (dev == 0 && sgn) continue;
-            int guess = mid + (sgn ? -dev : dev);
+            int guess = mid + (sgn ? dev : -dev);
             if (guess < 0 || guess > max) continue;
 
             // Parition the input set x according to the potential Yeardle
