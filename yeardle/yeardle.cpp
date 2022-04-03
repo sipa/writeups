@@ -130,6 +130,14 @@ public:
     friend bool operator==(const RangeSet& a, const RangeSet& b) { return a.ranges == b.ranges; }
     friend bool operator!=(const RangeSet& a, const RangeSet& b) { return a.ranges != b.ranges; }
 
+    size_t size() const {
+        size_t ret = 0;
+        for (const auto& [l, u] : ranges) {
+            ret += (u - l + 1);
+        }
+        return ret;
+    }
+
     /** Get a string representation. */
     std::string ToString() const {
         std::string ret = "";
@@ -150,29 +158,31 @@ public:
 
 /** Possible responses that can come out of Yeardle. */
 const std::pair<RangeSet, std::string> CLASSES[6] = {
-   {{0, 0}, "0"},
-   {{-2, -1, 1, 2}, "1+"},
-   {{-10, -3, 3, 10}, "3+"},
-   {{-40, -11, 11, 40}, "11+"},
+   {{-10000, -201, 201, 10000}, "200+"},
    {{-200, -41, 41, 200}, "41+"},
-   {{-10000, -201, 201, 10000}, "200+"}
+   {{-40, -11, 11, 40}, "11+"},
+   {{-10, -3, 3, 10}, "3+"},
+   {{-2, -1, 1, 2}, "1+"},
+   {{0, 0}, "0"}
 };
+
+const RangeSet ENDCLASS{0,0};
 
 /** Data type for representing a cache. For every set of candidate
  *  solutions left, a pair (number of guesses left, what to guess first). */
-using Cache = std::map<RangeSet, std::pair<int, int>>;
+using Score = std::pair<int, uint64_t>;
+using Cache = std::map<RangeSet, std::pair<Score, int>>;
+
 
 /** Analyze a set of candidates, and return (guesses left, what to guess first). */
-std::pair<int, int> Analyze(RangeSet x, Cache& cache);
+std::pair<Score, int> Analyze(RangeSet x, Cache& cache);
 
 /** Same as Analyze, but only invoked if not found in cache. */
-std::pair<int, int> AnalyzeInner(const RangeSet& x, Cache& cache) {
+std::pair<Score, int> AnalyzeInner(const RangeSet& x, Cache& cache) {
     assert(x.min() == 0);
     int max = x.max();
     assert(max >= 0);
-    // If the set is [0], no more guesses are needed.
-    if (max == 0) return {0, 0};
-    int bestworst = 100001;
+    Score bestworst{100001, 10000001};
     int bestguess = 0;
     // Loop over the possible values in [0,n], from the middle out.
     // (dev = distance from mid, sgn = right or left).
@@ -187,20 +197,21 @@ std::pair<int, int> AnalyzeInner(const RangeSet& x, Cache& cache) {
             // Parition the input set x according to the potential Yeardle
             // responses (CLASSES), and figure out which one has the most
             // guesses left.
-            int worst = -1;
+            Score worst{0, 0};
             for (const auto& [cls, _] : CLASSES) {
                 RangeSet res = cls;
                 res += guess;
                 RangeSet com = x & res;
-                if (com) {
+                if (com && cls != ENDCLASS) {
                     if (com == x) {
-                        worst = 100000;
+                        worst = {100000, 10000000};
                     } else {
                         auto [sub, _] = Analyze(com, cache);
-                        if (sub > worst) worst = sub;
+                        worst.first = std::max(worst.first, sub.first);
+                        worst.second += sub.second;
                     }
+                    if (worst > bestworst) break;
                 }
-                if (worst == 100000) break;
             }
             // Remember which guess results in the smallest most-guesses-left partition.
             if (worst < bestworst) {
@@ -209,22 +220,26 @@ std::pair<int, int> AnalyzeInner(const RangeSet& x, Cache& cache) {
             }
         }
     }
-    return {bestworst + 1, bestguess};
+    return {{bestworst.first + 1, bestworst.second + x.size()}, bestguess};
 }
 
 /** Analyze a set of candidates, and return (guesses left, what to guess first). */
-std::pair<int, int> Analyze(RangeSet x, Cache& cache) {
+std::pair<Score, int> Analyze(RangeSet x, Cache& cache) {
     // Normalize the input.
     const bool neg = x.canon();
     const int shift = x.min();
     x -= shift;
     // Look up in cache, and return if found.
     auto it = cache.find(x);
-    if (it != cache.end()) return {it->second.first, neg ? -(it->second.second + shift) : (it->second.second + shift)};
-    // Invoke AnalyzeInner to actually compute result.
-    auto ret = AnalyzeInner(x, cache);
-    // Store in cache.
-    cache[x] = ret;
+    std::pair<Score, int> ret;
+    if (it == cache.end()) {
+        // Invoke AnalyzeInner to actually compute result.
+        ret = AnalyzeInner(x, cache);
+        // Store in cache.
+        cache[x] = ret;
+    } else {
+        ret = it->second;
+    }
     // Return (after undoing normalization on the guess).
     ret.second += shift;
     if (neg) ret.second = -ret.second;
@@ -236,22 +251,24 @@ void Print(const RangeSet& x, Cache& cache, const std::string& desc, int rec = 0
     auto [moves, guess] = Analyze(x, cache);
     if (rec == 0) {
         printf("\n");
-        printf("### %i-guess decision tree for set [%s]\n", moves, x.ToString().c_str());
+        printf("### Decision tree for set [%s]: max %i moves, avg %f moves\n", x.ToString().c_str(), moves.first, double(moves.second) / x.size());
         printf("\n");
     }
     for (int i = 0; i < rec; ++i) printf("  ");
     printf("* %s", desc.c_str());
     if (desc.size()) printf(": ");
-    if (moves == 0) {
-        printf("solution %s\n", x.ToString().c_str());
-    } else {
-        printf("range [%s]: guess %i\n", x.ToString().c_str(), guess);
-        for (const auto& [cls, str] : CLASSES) {
-            RangeSet res = cls;
-            res += guess;
-            RangeSet com = x & res;
-            if (com) {
-                Print(com, cache, desc + (desc.size() ? " " : "") + "g(" + std::to_string(guess) + ")=" + str, rec + 1);
+    printf("guess %i (range: %s)\n", guess, x.ToString().c_str());
+    for (const auto& [cls, str] : CLASSES) {
+        RangeSet res = cls;
+        res += guess;
+        RangeSet com = x & res;
+        if (com) {
+            auto sdesc = desc + (desc.size() ? " " : "") + "g(" + std::to_string(guess) + ")=" + str;
+            if (cls != ENDCLASS) {
+                Print(com, cache, sdesc, rec + 1);
+            } else {
+                for (int i = 0; i < rec + 1; ++i) printf("  ");
+                printf("* %s: solution %i\n", sdesc.c_str(), guess);
             }
         }
     }
