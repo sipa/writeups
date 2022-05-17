@@ -251,13 +251,13 @@ void Print(const RangeSet& x, Cache& cache, const std::string& desc, int rec = 0
     auto [moves, guess] = Analyze(x, cache);
     if (rec == 0) {
         printf("\n");
-        printf("### Decision tree for set [%s]: max %i moves, avg %f moves\n", x.ToString().c_str(), moves.first, double(moves.second) / x.size());
+        printf("### Decision tree for set [%s]: max %i guesses, avg %f guesses\n", x.ToString().c_str(), moves.first, double(moves.second) / x.size());
         printf("\n");
     }
     for (int i = 0; i < rec; ++i) printf("  ");
     printf("* %s", desc.c_str());
     if (desc.size()) printf(": ");
-    printf("guess %i (range: %s)\n", guess, x.ToString().c_str());
+    printf("**guess %i** (range: %s)\n", guess, x.ToString().c_str());
     for (const auto& [cls, str] : CLASSES) {
         RangeSet res = cls;
         res += guess;
@@ -268,7 +268,7 @@ void Print(const RangeSet& x, Cache& cache, const std::string& desc, int rec = 0
                 Print(com, cache, sdesc, rec + 1);
             } else {
                 for (int i = 0; i < rec + 1; ++i) printf("  ");
-                printf("* %s: solution %i\n", sdesc.c_str(), guess);
+                printf("* %s: **solution %i**\n", sdesc.c_str(), guess);
             }
         }
     }
