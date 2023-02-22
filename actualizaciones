@@ -1,0 +1,160 @@
+
+GreggJuanEduardoPH1
+/
+escritos
+Plantilla pública
+
+
+actualizaciones
+
+Vinculación de la solicitud de incorporación de cambios a la incidencia
+Vincular una solicitud de cambios a una propuesta
+En este articulo
+Acerca de las propuestas y solicitudes de cambios vinculados
+Vincular una solicitud de cambios a una propuesta utilizando una palabra clave
+Vinculación manual de una solicitud de incorporación de cambios a una propuesta mediante la barra lateral de la solicitud de incorporación de cambios
+Vinculación manual de una solicitud de incorporación de cambios o una rama a un problema mediante la barra lateral de la propuesta
+información adicional
+Puede vincular una solicitud de incorporación de cambios o sucursal a un problema para mostrar que hay una corrección en curso y cerrar automáticamente el problema cuando se combina la solicitud de incorporación de cambios o sucursal.
+
+Nota:  Las palabras clave especiales en la descripción de una solicitud de incorporación de cambios se interpretan cuando la solicitud de incorporación de cambios se destina a la rama predeterminada del repositorio. Pero si la base de la PR es cualquier otra rama , estas palabras clave se ignorarán, no se creará ningún vínculo y la combinación de la PR no tendrá efecto alguno en las incidencias. Si quiere vincular una solicitud de incorporación de cambios con una incidencia mediante una palabra clave, la solicitud debe estar en la rama predeterminada.    
+
+Acerca de las propuestas y solicitudes de cambios vinculados
+Puede vincular una incidencia a una solicitud de incorporación de cambios manualmente o con una palabra clave compatible en la descripción de la solicitud.
+
+Cuando vincula una solicitud de cambios a la propuesta a la que ésta hace referencia, los colaboradores pueden ver si alguien está trabajando en dicha propuesta.
+
+Cuando fusionas una solicitud de cambios que se ha vinculado y se encuentra en la rama anterior de un repositorio, su propuesta vinculada se cierra automáticamente. Para más información sobre la rama preestablecida, vea " Cambio de rama preestablecida ".
+
+Vincular una solicitud de cambios a una propuesta utilizando una palabra clave
+Puede vincular una solicitud de incorporación de cambios a una incidencia si utiliza una palabra clave compatible en la descripción de la solicitud o en un mensaje de confirmación. La solicitud de incorporación de cambios debe estar en la rama preestablecida.  
+
+cerrar
+cierra
+cerrado
+arreglar
+correcciones
+fijo
+resolver
+resuelve
+resuelto
+Si utiliza una palabra clave para referenciar un comentario de una solicitud de cambios en otra solicitud de cambios, estas solicitudes se enlazarán. Con la fusión de la solicitud de incorporación de cambios que hace la referencia también se cerrará la solicitud de incorporación de cambios referenciada.
+
+La sintaxis para palabras clave de cierre surgió de si la propuesta se encuentra en el mismo repositorio que la solicitud de cambios.
+
+Informe vinculado	Sintaxis	ejemplo
+Propuesta en el mismo repositorio	PALABRA CLAVE #NÚMERO DE INCIDENCIA	Cierra #10
+Propuesta en un repositorio diferente	PALABRA_CLAVE PROPIETARIO/REPOSITORIO#NÚMERO_DE_INCIDENCIA	Corrige octo-org/octo-repo#100
+Propuestas multiples	Usar la sintaxis completa para cada informe	Resuelve #10, resuelve #123, resuelve octo-org/octo-repo#100
+Solo las solicitudes de incorporación pueden de cambios conectados manualmente se desvincular manualmente. Para desvincular una incidencia que haya vinculado previamente utilizando una palabra clave, deberá editar la descripción de la solicitud de incorporación de cambios y así poder eliminar la palabra clave.
+
+También puedes utilizar palabras clave de cierre en un mensaje de confirmación. La propuesta se cerrará cuando fusiones la confirmación en la rama precedente, pero la solicitud de cambios que contiene la confirmación no se listará como una solicitud de cambios enlazada.
+
+Vinculación manual de una solicitud de incorporación de cambios a una propuesta mediante la barra lateral de la solicitud de incorporación de cambios
+Cualquiera con permisos de escritura en un repositorio puede vincular manualmente una solicitud de cambios a una propuesta desde la barra lateral de la solicitud de incorporación de cambios.
+
+Puedes vincular hasta diez propuestas a cada solicitud de cambios manualmente. La propuesta y la solicitud de cambios deberán encontrarse en el mismo repositorio.
+
+En GitHub.com, navega a la página principal del repositorio. 1. En el nombre del repositorio, haga clic en Solicitudes de incorporación de cambios .  Selección de la pestaña Incidencias y solicitudes de incorporación de cambios
+
+En la lista de solicitudes de extracción, haga clic en aquella que quiera enlazar a un informe de problemas.
+
+En la barra lateral derecha, en la sección de "Desarrollo", haz clic en  .
+
+Da clic en la propuesta que quieras enlazar a la solicitud de cambios.Menú desplegable para vincular una incidencia
+
+Vinculación manual de una solicitud de incorporación de cambios o una rama a un problema mediante la barra lateral de la propuesta
+Cualquiera con permisos de escritura en un repositorio puede vincular manualmente una solicitud de cambios o rama a una propuesta desde la barra lateral de la propuesta.
+
+Puedes vincular hasta diez propuestas a cada solicitud de cambios manualmente. La propuesta puede estar en un repositorio diferente al de la solicitud de incorporación de cambios vinculados o la rama. Se recordará el último repositorio seleccionado
+
+En GitHub.com, navega a la página principal del repositorio. 2. Debajo del nombre del repositorio, haz clic en Propuestas .  
+
+Pestaña de informe de problemas
+
+En la lista de propuestas, haga clic en la propuesta a la que desea vincular una solicitud de incorporación de cambios o una rama.
+
+En la barra lateral derecha, haz clic en Desarrollo . Menú Desarrollo en la barra lateral derecha
+
+Haga clic en el repositorio que contiene la solicitud de incorporación de cambios o la rama que desea vincular a la.Desplegable para seleccionar el repositorio
+
+Haz clic en la solicitud de cambios o rama que quieras enlazar a la propuesta.Desplegable para vincular solicitud de incorporación de cambios o rama
+
+Haga clic en Aplicar . Aplicar
+
+información adicional
+" Referencias y direcciones URL de vinculación automática "
+[Vinculación de la solicitud de incorporación de cambios a la incidencia](https://docs.github.com/es/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an- issue) Vincular una solicitud de cambios a una propuesta In this article [Acerca de las propuestas y solicitudes de cambios vinculados](https://docs.github.com/es/issues/tracking-your-work-with-issues/linking -a-pull-request-to-an-issue#about-linked-issues-and-pull-requests) [Vincular una solicitud de cambios a una propuesta utilizando una palabra clave](https://docs.github.com/ es/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) [Vinculación manual de una solicitud de incorporación de cambios a una propuesta mediante la barra lateral de la solicitud de incorporación de cambios](https://docs.github.com/es/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#manually-linking-a-pull-request-to-an-issue-using-the- pull-request-sidebar) [Vinculación manual de una solicitud de incorporación de cambios o una rama a un problema mediante la barra lateral de la propuesta](https://docs.github.com/es/issues/tracking-your-work -con-problemas/vincular-una-solicitud-de-extracción-a-un-problema#vincular-manualmente-una-solicitud-de-extracción-o-sucursal-a-un-problema-usando-la-barra-lateral-de-problemas) [Información adicional ](https://docs.github.com/es/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#further-reading) Puedes vincular una solicitud de incorporación de cambios o sucursal a un problema para mostrar que hay una corrección en curso y cerrar automáticamente el problema cuando se combina la solicitud de incorporación de cambios o sucursal.github.com/es/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#manually-linking-a-pull-request-or-branch-to-an- issue-using-the-issue-sidebar) [Información adicional](https://docs.github.com/es/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an -issue#further-reading) Puede vincular una solicitud de incorporación de cambios o branch a un problema para mostrar que hay una corrección en curso y cerrar automáticamente el problema cuando se combina la solicitud de incorporación de cambios o branch .github.com/es/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#manually-linking-a-pull-request-or-branch-to-an- issue-using-the-issue-sidebar) [Información adicional](https://docs.github.com/es/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an -issue#further-reading) Puede vincular una solicitud de incorporación de cambios o branch a un problema para mostrar que hay una corrección en curso y cerrar automáticamente el problema cuando se combina la solicitud de incorporación de cambios o branch .com/es/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#further-reading) Puedes vincular una solicitud de incorporación de cambios o branch a un problema para mostrar que hay una corrección en curso y cerrar automáticamente el problema cuando se combina la solicitud de incorporación de cambios o sucursal.com/es/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#further-reading) Puedes vincular una solicitud de incorporación de cambios o branch a un problema para mostrar que hay una corrección en curso y cerrar automáticamente el problema cuando se combina la solicitud de incorporación de cambios o sucursal.
+Nota: Las palabras clave especiales en la descripción de una solicitud de incorporación de cambios se interpretan cuando la solicitud de incorporación de cambios se destina a la rama predeterminada del repositorio. Pero si la base de la PR es cualquier otra rama, estas palabras clave se ignorarán, no se creará ningún vínculo y la combinación de la PR no tendrá ningún efecto en las incidencias. Si quiere vincular una solicitud de incorporación de cambios con una incidencia mediante una palabra clave, la solicitud debe estar en la rama predeterminada.
+
+Acerca de las propuestas y solicitudes de cambios vinculados
+Puede vincular una incidencia a una solicitud de incorporación de cambios manualmente o con una palabra clave compatible en la descripción de la solicitud.
+
+Cuando vincula una solicitud de cambios a la propuesta a la que ésta hace referencia, los colaboradores pueden ver si alguien está trabajando en dicha propuesta.
+
+Cuando fusionas una solicitud de cambios que se ha vinculado y se encuentra en la rama anterior de un repositorio, su propuesta vinculada se cierra automáticamente. Para más información sobre la rama preestablecida, vea " Cambio de rama preestablecida ".
+
+Vincular una solicitud de cambios a una propuesta utilizando una palabra clave
+Puede vincular una solicitud de incorporación de cambios a una incidencia si utiliza una palabra clave compatible en la descripción de la solicitud o en un mensaje de confirmación. La solicitud de incorporación de cambios debe estar en la rama preestablecida.
+
+cerrar
+closes
+closed
+fix
+fixes
+fijo
+resolve
+resolve
+resolve
+Si utiliza una palabra clave para referenciar un comentario de una solicitud de cambios en otra solicitud de cambios, estas solicitudes se enlazarán. Con la fusión de la solicitud de incorporación de cambios que hace la referencia también se cerrará la solicitud de incorporación de cambios referenciada.
+
+La sintaxis para palabras clave de cierre surgió de si la propuesta se encuentra en el mismo repositorio que la solicitud de cambios.
+
+Informe vinculado Sintaxis Ejemplo
+Propuesta en el mismo repositorio PALABRA CLAVE #NÚMERO DE INCIDENCIA Closes #10
+Propuesta en un repositorio diferente PALABRA_CLAVE PROPIETARIO/REPOSITORIO#NÚMERO_DE_INCIDENCIA Fixes octo-org/octo-repo#100
+Propuestas múltiples utilizando la sintaxis completa para cada informe Resolves # 10, resuelve #123, resuelve octo-org/octo-repo#100
+Solo las solicitudes de incorporación de cambios vinculados manualmente se pueden desvincular manualmente. Para desvincular una incidencia que haya vinculado previamente utilizando una palabra clave, deberá editar la descripción de la solicitud de incorporación de cambios y así poder eliminar la palabra clave.
+
+También puedes utilizar palabras clave de cierre en un mensaje de confirmación. La propuesta se cerrará cuando fusiones la confirmación en la rama precedente, pero la solicitud de cambios que contiene la confirmación no se listará como una solicitud de cambios enlazada.
+
+Vinculación manual de una solicitud de incorporación de cambios a una propuesta mediante la barra lateral de la solicitud de incorporación de cambios
+Cualquiera con permisos de escritura en un repositorio puede vincular manualmente una solicitud de cambios a una propuesta desde la barra lateral de la solicitud de incorporación de cambios.
+
+Puedes vincular hasta diez propuestas a cada solicitud de cambios manualmente. La propuesta y la solicitud de cambios deberán encontrarse en el mismo repositorio.
+
+En GitHub.com, navega a la página principal del repositorio. 1. En el nombre del repositorio, haga clic en Solicitudes de incorporación de cambios.
+Selección de la pestaña Incidencias y solicitudes de incorporación de cambios
+
+En la lista de solicitudes de extracción, haga clic en aquella que quiera enlazar a un informe de problemas.
+
+En la barra lateral derecha, en la sección de "Desarrollo", haz clic en .
+
+Da clic en la propuesta que quieras enlazar a la solicitud de cambios.
+Menú desplegable para vincular una incidencia
+
+Vinculación manual de una solicitud de incorporación de cambios o una rama a un problema mediante la barra lateral de la propuesta
+Cualquiera con permisos de escritura en un repositorio puede vincular manualmente una solicitud de cambios o rama a una propuesta desde la barra lateral de la propuesta.
+
+Puedes vincular hasta diez propuestas a cada solicitud de cambios manualmente. La propuesta puede estar en un repositorio diferente al de la solicitud de incorporación de cambios vinculados o la rama. Se recordará el último repositorio seleccionado
+
+En GitHub.com, navega a la página principal del repositorio. 2. Debajo del nombre del repositorio, haz clic en Propuestas.
+
+Pestaña de informe de problemas
+
+En la lista de propuestas, haga clic en la propuesta a la que desea vincular una solicitud de incorporación de cambios o una rama.
+
+En la barra lateral derecha, haz clic en Desarrollo.
+Menú Desarrollo en la barra lateral derecha
+
+Haga clic en el repositorio que contiene la solicitud de incorporación de cambios o la rama que desea vincular a la.
+Desplegable para seleccionar el repositorio
+
+Haz clic en la solicitud de cambios o rama que quieras enlazar a la propuesta.
+Desplegable para vincular solicitud de incorporación de cambios o rama
+
+Haga clic en Aplicar.
+aplicar
+
+Información adicional
+" Referencias y direcciones URL de vinculación automática "

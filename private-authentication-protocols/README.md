@@ -50,19 +50,19 @@ possesses a private key corresponding to one of (potentially) several acceptable
 It is intended to be used over an encrypted but unauthenticated connection.
 
 There are two parties: the challenger and the responder. The challenger has a set of acceptable
-public keys ***Q***, with a publicly-known upper bound *n*. ***Q*** can be empty if no authentication is desired.
-The responder has a set of private keys ***p*** (possibly with a known upper bound *m*), with corresponding
-set of public keys ***P***. These sets may be empty if the responder has no key material. The challenger at
+public keys $\bf Q$, with a publicly-known upper bound $n$. $\bf Q$ can be empty if no authentication is desired.
+The responder has a set of private keys $\bf p$ (possibly with a known upper bound $m$), with corresponding
+set of public keys $\bf P$. These sets may be empty if the responder has no key material. The challenger at
 the end outputs a Boolean: success or failure.
 
 A PAP must have the following properties:
-* **Correctness** When the intersection between ***P*** and ***Q*** is non-empty, the challenger returns true. This is obviously
+* **Correctness** When the intersection between $\bf P$ and $\bf Q$ is non-empty, the challenger returns true. This is obviously
   necessary for the scheme to work at all.
-* **Security against impersonation** When the intersection between ***P*** and ***Q*** is empty, the challenger
+* **Security against impersonation** When the intersection between $\bf P$ and $\bf Q$ is empty, the challenger
   returns false. This means it must be impossible for someone without access to an acceptable private key
   to spoof authentication, even if they know the acceptable public key(s).
-* **Challenger privacy** Responders learn nothing about the keys in ***Q*** except possibly the intersection
-  with its ***P***. Specifically, responders which have a database of public keys (without corresponding private keys) cannot know
+* **Challenger privacy** Responders learn nothing about the keys in $\bf Q$ except possibly the intersection
+  with its $\bf P$. Specifically, responders which have a database of public keys (without corresponding private keys) cannot know
   which of these, or how many of them, are in ***Q***. Responders can also not determine whether multiple
   PAP sessions have overlapping ***Q*** sets (excluding public keys the responder has private keys for).
   This prevents unsuccessful responders (including MitMs) from knowing whether authentication is desired at all or for whom,
@@ -148,12 +148,12 @@ doesn't have to accept participating in more than one protocol run.
 ### Common notation and assumptions
 
 We assume an encrypted but unauthenticated connection already exists
-between the two participants. We also assume a unique session id *s* exists, only
+between the two participants. We also assume a unique session id $s$ exists, only
 known to the participants. Both could for example be set up per a Diffie-Hellman
 negotiation.
 
-*G* and *M* are two generators of an additively-denoted cyclic group in which
-the discrete logarithm problem is hard, and *M*'s discrete logarithm w.r.t. *G*
+$G$ and $M$ are two generators of an additively-denoted cyclic group in which
+the discrete logarithm problem is hard, and $M$'s discrete logarithm w.r.t. *G*
 is not known to anyone. The *⋅* symbol denotes scalar multiplication (repeated
 application of the group operation).
 Lowercase variables refer to integers modulo the
