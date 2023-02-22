@@ -1,0 +1,387 @@
+From bcebc046110849c2480a6fa24df4543cbbcdea93 Mon Sep 17 00:00:00 2001
+From: GreggJEduardoPH <greggjeduardoph@gmail.com>
+Date: Wed, 22 Feb 2023 09:45:28 -0600
+Subject: [PATCH] Eligador
+
+Signed-off-by: GreggJEduardoPH  <greggjeduardoph@gmail.com>
+---
+ Eligador | 370 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 370 insertions(+)
+ create mode 100644 Eligador
+
+diff --git a/Eligador b/Eligador
+new file mode 100644
+index 0000000..f66dfc3
+--- /dev/null
++++ b/Eligador
+@@ -0,0 +1,370 @@
++
++
++1. Introducción
++1.1 eligador
++A veces es deseable poder codificar claves públicas de curva elíptica como cadenas de bytes uniformes. En particular, un intercambio de claves Diffie-Hellman requiere enviar un elemento de grupo en ambas direcciones, lo que para las variantes basadas en Elliptic Curve implica enviar un punto de curva. Como las coordenadas de tales puntos satisfacen la ecuación de la curva, esto da como resultado una relación detectable entre los bytes enviados si esas coordenadas se envían de forma ingenua. Incluso si solo se envían las coordenadas X de los puntos, el conocimiento de que solo alrededor del 50 % de las coordenadas X tienen puntos correspondientes en la curva significa que un atacante que observa muchas conexiones puede distinguirlas de las aleatorias: la probabilidad de que 30 transmisiones aleatorias observadas ser siempre válidas las coordenadas X es menos de uno en mil millones.
++
++Se han propuesto varios enfoques para esta solución, incluidos Elligator y Elligator 2 de Bernstein et al., que definen un mapeo entre un subconjunto de puntos en la curva y matrices de bytes, de tal manera que la codificación de puntos de curva generados uniformemente dentro de ese conjunto es indistinguible de los bytes aleatorios. Esto permite ejecutar ECDH de manera más encubierta : en lugar de permitir cualquier clave pública como ECDH efímera, restringe la elección a aquellas que tienen un mapeo de Elligator y envía la codificación. Esto requiere generar en promedio 2 claves ECDH efímeras, pero da como resultado la realización de una negociación ECDH en la que cada parte envía solo 32 bytes uniformes entre sí (para curvas de 256 bits).
++
++Desafortunadamente, Elligator y Elligator 2 tienen requisitos que los hacen incompatibles con curvas de orden impar como lo son las curvas BN.
++
++1.2 Elligador al cuadrado
++En este artículo , Tibouchi describe una solución más genérica que funciona para cualquier curva elíptica y para cualquier punto de ella en lugar de un subconjunto, llamada Elligator Squared. La desventaja es que la salida de codificación tiene el doble de tamaño: para curvas de 256 bits, la codificación es de 64 bytes uniformemente aleatorios. Por el lado positivo, generalmente también es más rápido ya que no necesita generar múltiples claves ECDH.
++
++Se basa en una función f que asigna elementos de campo a puntos, con las siguientes propiedades:
++
++Cada elemento de campo se asigna a un único punto válido en la curva por f .
++Una fracción significativa de los puntos de la curva debe ser accesible (pero no todos).
++El número de elementos de campo que se asignan a cualquier punto dado debe tener un límite superior pequeño d .
++Estas preimágenes (los elementos de campo que se asignan a un punto dado) deben ser computables de manera eficiente.
++Las funciones de mapeo de Elligator y Elligator 2 se pueden usar como f para las curvas donde existan, pero debido a que son menos restrictivas, existen funciones de mapeo adecuadas para todas las curvas elípticas, incluidas las que tienen un orden impar.
++
++La codificación Elligator Squared consta entonces de dos elementos de campo, y juntos representan la suma (operación de grupo de curva elíptica) de los puntos obtenidos al aplicar f a esos dos elementos de campo. Para decodificar tal par (u,v) , simplemente calcule f(u) + f(v) .
++
++Para encontrar una codificación para un punto P dado , se utiliza el siguiente algoritmo de muestreo aleatorio:
++
++Bucle:
++Genere un elemento de campo uniformemente aleatorio u .
++Calcule el punto Q = P - f(u) .
++Calcule el conjunto de preimágenes t de Q (por lo que para cada v en t se cumple que f(v) = Q ). Este conjunto puede tener cualquier tamaño en [0,d] .
++Genere un número aleatorio j en el rango [0,d) .
++Si j < len(t) : return (u,t[j]) , de lo contrario empezar de nuevo.
++Efectivamente, este algoritmo elige aleatoriamente de manera uniforme un par de elementos de campo del conjunto de todos los que codifican P . Se puede demostrar que el número de puntos de pares de preimagen solo difiere insignificantemente entre sí y, por lo tanto, este algoritmo de muestreo da como resultado un par uniformemente aleatorio de elementos de campo, dados puntos P uniformemente aleatorios .
++
++1.3 Función de mapeo para curvas tipo BN
++En este artículo , Fouque y Tibouchi describen una llamada función de mapeo f de Shallue-van de Woestijne que cumple con todos los requisitos anteriores, para curvas similares a BN.
++
++Específicamente, dado un primo p , el campo F = GF(p) y la curva elíptica E sobre él definida por y 2 = g(x) = x 3 + b , donde p mod 12 = 7 y 1+b es un cuadrado distinto de cero en F , defina las siguientes constantes (en F ):
++
++do1 = √(-3)
++do 2 = (do 1 - 1) / 2
++c 3 = (-c 1 - 1) / 2
++Y define las siguientes 3 funciones:
++
++q 1 (s) = c 2 - c 1 s / (1+b+s)
++q 2 (s) = c 3 + c 1 s / (1+b+s)
++q 3 (s) = 1 - (1+b+s) 2 / (3s)
++Entonces el documento muestra que dado un cuadrado distinto de cero s en F , g(q 1 (s))×g(q 2 (s))×g(q 3 (s)) también será cuadrado, o en otras palabras, exactamente uno de {q 1 (s), q 2 (s), q 3 (s)} , ​​o los tres, son coordenadas X válidas en E . Para s=0 , q 1 (0) y q 2 (0) se asignan a puntos válidos en la curva, mientras que q 3 (0) no está definido (división por cero).
++
++Con eso, la función f(u) se puede definir de la siguiente manera:
++
++Calcule x 1 = q 1 (u 2 ) , x 2 = q 2 (u 2 ) , x 3 = q 3 (u 2 )
++Sea x el primero de {x 1 ,x 2 ,x 3 } que es una coordenada X válida en E (es decir, g(x) es cuadrada).
++Sea y la raíz cuadrada de g(x) cuya paridad es igual a la de u (cada mod P cuadrado distinto de cero tiene dos raíces distintas, negaciones entre sí, de las cuales una es par y otra impar).
++Devuelve (x,y) .
++Esta función cumple con todos nuestros requisitos. Asigna cada elemento de campo a un punto de curva, se alcanza alrededor del 56,25% de los puntos de curva, ningún punto tiene más de d=4 preimágenes, y esas preimágenes se pueden calcular de manera eficiente. Además, cuando se implementa de esta manera, las divisiones por cero no son una preocupación. El 1+b+s en q 1 y q 2 nunca es cero para el cuadrado s (requeriría s = -1-b , pero -1-b nunca es cuadrado). Los 3 en q 3 pueden ser 0 , pero esto no se alcanzará como q 1 (0)aterriza en la curva.
++
++2 Elligador especializado al cuadrado
++2.1 Invirtiendo f
++Elligator Squared necesita una forma eficiente de encontrar los elementos de campo v para los cuales f(v) = Q , dado Q . Empezamos definiendo 4 funciones inversas parciales r 1..4 para f . Dado un par de coordenadas (x,y) en la curva, cada uno de estos devuelve ⊥ o devuelve un elemento de campo t tal que f(t) = (x,y) .
++
++r i (x, y) :
++
++Calcular s = q ? -1 (x)
++Si i=1 : q 1 -1 (x) : s = (1+b)(c 1 -z) / (c 1 +z) donde z = 2x+1
++Si i=2 : q 2 -1 (x) : s = (1+b)(c 1 +z) / (c 1 -z) donde z = 2x+1
++Si i=3 : q 3 -1 (x) : s = (z + √(z 2 - 16(b+1) 2 ))/4 donde z = 2-4B-6x
++Si i=4 : q 3 -1 (x) : s = (z - √(z 2 - 16(b+1) 2 ))/4 donde z = 2-4B-6x
++Si s no existe (debido a la división por cero o raíz cuadrada inexistente), devuelve ⊥ .
++Si s no es cuadrado: devuelve ⊥
++Para todo j en 1..min(i-1,2) :
++Si g(q j (s)) es cuadrada: return ⊥ ; para garantizar que la preimagen construida retroceda por el correspondiente q i delantero y no por uno inferior.
++Calcule u = √s
++Si es_impar(u) = es_impar(y) :
++devuélveme _
++Demás:
++Si u=0 : devuelve ⊥ (requeriría un 0 impar , pero la negación no cambia la paridad)
++Vuelve -u
++La función (de varios valores) f -1 (x,y) se puede definir como el conjunto de valores distintos de ⊥ en {r 1 (x,y),r 2 (x,y),r 3 (x,y ),r 4 (x,y)} , ya que cada preimagen de (x,y) bajo f es una de estas cuatro.
++
++2.2 Evitar el cálculo de todos los inversos
++Resulta que en realidad no necesitamos evaluar f -1 (x,y) en su totalidad. Considere lo siguiente: el ciclo de muestreo de Elligator Squared es efectivamente lo siguiente:
++
++Bucle:
++Genere un elemento de campo uniformemente aleatorio u .
++Calcule el punto Q = P - f(u) .
++Calcule la lista de preimágenes distintas t = f -1 (Q) .
++Rellene t con ⊥ elementos de tamaño 4 (donde d=4 es el número máximo de preimágenes para cualquier punto dado).
++Seleccione una v uniformemente aleatoria en t .
++Si v no es ⊥ , devuelve (u,v) ; de lo contrario empezar de nuevo.
++En este ciclo, se puede usar una lista alternativa t' = [r 1 (x,y),r 2 (x,y),r 3 (x,y),r 4 (x,y)] . Tiene exactamente los mismos elementos que la t acolchada anterior, excepto potencialmente en un orden diferente. Esta es una alternativa válida porque si todo lo que vamos a hacer es seleccionar un elemento uniformemente aleatorio de él, el orden de esta lista es irrelevante. Para ser precisos, necesitamos lidiar con el caso límite aquí donde múltiples r i (x, y) para distintos valores de i son iguales, ya que esto introduciría un sesgo. Para ello, añadimos a la definición de r i (x,y) que ⊥se devuelve si r j (x,y) = r i (x,y) para j < i .
++
++Seleccionar un elemento uniformemente aleatorio de t' es fácil: simplemente seleccione una de las cuatro funciones r i , evalúela en Q y comience de nuevo si es ⊥ :
++
++Bucle:
++Genere un elemento de campo uniformemente aleatorio u .
++Calcule el punto Q = P - f(u) .
++Genere un j uniformemente aleatorio en 1..4 .
++Calcule v = r j (Q) .
++Si v no es ⊥ , devuelve (u,v) ; de lo contrario empezar de nuevo.
++Esto evita la necesidad de calcular t o t' en su totalidad.
++
++2.3 Simplificación de los controles de ida y vuelta
++Como se explicó en el Párrafo 2.1, las funciones inversas parciales r i>1 deben verificar que el valor obtenido a través de la fórmula q i -1 no se mapea a la curva a través de una función q i directa de numeración inferior .
++
++Para r 2 , esto significa comprobar que q 1 (q 2 -1 (x)) no está en la curva. Afortunadamente, q 1 (q 2 -1 (x)) es simplemente -x-1 , lo que simplifica la verificación.
++
++Para r 3,4, en realidad no es necesario verificar las asignaciones directas a través de q 1 y q 2 . La construcción de f de Shallue-van de Woestijne garantiza que exactamente una o las tres funciones q i caen en la curva. Al calcular un inverso a través de q 3 -1 , y ese inverso existe, entonces sabemos que ciertamente aterriza en la curva cuando se mapea hacia adelante a través de q 3 . Eso implica que tanto q 1 como q 2 también aterrizan en la curva, o ninguno de ellos lo hace. Así para r 3,4basta comprobar que q 1 no aterriza en la curva.
++
++2.4 Simplificación de las comprobaciones de preimagen duplicada
++Como se explicó en el Párrafo 2.2, necesitamos tratar con el caso límite donde múltiples r i (x, y) con distintas i corresponden al mismo valor.
++
++La mayoría de estos controles son en realidad innecesarios. Por ejemplo, sí, es posible que q 1 -1 (x) y q 2 -1 (x) sean iguales (cuando x = -1/2 ), pero cuando ese es el caso, es obvio que q 1 ( q 2 -1 (x)) también estará en la curva (ya que es igual a x ), y por lo tanto el cheque de ida y vuelta ya hará que se devuelva ⊥ .
++
++Solo hay un caso que no está cubierto por el cheque de ida y vuelta: r 4 (x,y) puede coincidir con r 3 (x,y) , que no está cubierto porque ambos usan el mismo q 3 directo ( x) . Esto sucede cuando x = (-1-4B)/3 o x = 1 .
++
++Tenga en cuenta que no implementar estas comprobaciones solo introducirá un sesgo insignificante, ya que estos casos son demasiado raros para las curvas de tamaño criptográfico cuando solo se usan entradas aleatorias como en Elligator Squared. Se mencionan aquí para completar, ya que ayuda a escribir pruebas de curva pequeña donde la corrección se puede verificar exhaustivamente.
++
++2.5 Tratando con el infinito
++El punto en el infinito no es una clave pública válida, pero es posible construir elementos de campo u y v tales que f(u)+f(v)=∞ . Para asegurarse de que todas las entradas (u,v) se puedan decodificar, es preferible reasignar este caso especial a otro punto de la curva. Una buena opción es mapear este caso a f(u) : es fácil de implementar, no muy desigual e incluso fácil de hacer que el codificador apunte a este caso (aunque con u generado aleatoriamente , el sesgo de no hacerlo es despreciable).
++
++En el lado del decodificador, uno simplemente necesita recordar f(u) , y si f(u)+f(v) es el punto en el infinito, devuélvalo en su lugar.
++
++En el lado del codificador, se puede detectar el caso en el ciclo donde Q=Pf(u)=∞ ; esto corresponde a la situación donde P=f(u) . No existe v para el cual f(v)=Q en ese caso, pero debido a la regla especial en el lado del decodificador, es posible apuntar a f(v)=-f(u) en ese caso. Como -f(u) ya se calcula en el proceso de encontrar Q , basta con tratar de encontrar preimágenes para eso.
++
++2.6 Poniendo todo junto
++El algoritmo completo se puede escribir de la siguiente manera en pseudocódigo similar a Python. Tenga en cuenta que las variables (excepto i ) representan elementos de campo y no son números enteros normales de Python (sin embargo, con algunas funciones auxiliares es un código Sage válido ).
++
++def f(u):
++    s = u**2 # Turn u into a square to be fed to the q_i functions
++    x1 = c2 - c1*s / (1+b+s) # x1 = q_1(s)
++    g1 = x1**3 + b # g1 = g(x1)
++    if is_square(g1): # x1 is on the curve
++        x, g = x1, g1
++    else:
++        x2 = -x1-1 # x2 = q_2(s)
++        g2 = x2**3 + b
++        if is_square(g2): # x2 is on the curve
++            x, g = x2, g2
++        else: # Neither x1 or x2 is on the curve, so x3 is
++            x3 = 1 - (1+b+s)**2 / (3*s) # x3 = q3(s)
++            g3 = x3**3 + b # g3 = g(x3)
++            x, g = x3, g3
++    y = sqrt(g)
++    if is_odd(y) == is_odd(u):
++        return (x, y)
++    else:
++        return (x, -y)
++Tenga en cuenta que la anterior función de mapeo directo f difiere de la del artículo del Párrafo 1.3. Eso es porque la versión allí tiene como objetivo la operación en tiempo constante. Eso es importante para ciertas aplicaciones, pero no para Elligator Squared, que es inherentemente de tiempo variable debido al ciclo de muestreo y, al menos en el contexto de ECDH, no opera con datos secretos que deben protegerse de ataques de canal lateral.
++
++def r(Q,i):
++    x, y = Q
++    if i == 1 or i == 2:
++        z = 2*x + 1
++        t1 = c1 - z
++        t2 = c1 + z
++        if not is_square(t1*t2):
++            # If t1*t2 is not square, then q1^-1(x)=(1+b)*t1/t2 or
++            # q2^-1(x)=(1+b)*t2/t1 aren't either.
++            return None
++        if i == 1:
++            if t2 == 0:
++                return None # Would be division by 0.
++            if t1 == 0 and is_odd(y):
++                return None # Would require odd 0.
++            u = sqrt((1+b)*t1/t2)
++        else:
++            x1 = -x-1 # q1(q2^-1(x)) = -x-1
++            if is_square(x1**3 + b):
++                return None # Would roundtrip through q1 instead of q2.
++            # On the next line, t1 cannot be 0, because in that case z = c1, or
++            # x = c2, or x1 == c3, and c3 is a valid X coordinate on the curve
++            # (c3**3 + b == 1+b which is square), so the roundtrip check above
++            # already catches this.
++            u = sqrt((1+b)*t2/t1)
++    else: # i == 3 or i == 4
++        z = 2 - 4*b - 6*x
++        if not is_square(z**2 - 16*(b+1)**2):
++            return None # Inner square root in q3^-1 doesn't exist.
++        if i == 3:
++            s = (z + sqrt(z**2 - 16*(b+1)**2)) / 4 # s = q3^-1(x)
++        else:
++            if z**2 == 16*(b+1)**2:
++                return None # r_3(x,y) == r_4(x,y)
++            s = (z - sqrt(z**2 - 16*(b+1)**2)) / 4 # s = q3^-1(x)
++        if not is_square(s):
++            return None # q3^-1(x) is not square.
++        # On the next line, (1+b+s) cannot be 0, because both (b+1) and
++        # s are square, and 1+b is nonzero.
++        x1 = c2 - c1*s / (1+b+s)
++        if is_square(x1**3 + b):
++            return None # Would roundtrip through q1 instead of q3.
++        u = sqrt(s)
++    if is_odd(y) == is_odd(u):
++        return u
++    else:
++        return -u
++def encode(P):
++    while True:
++        u = field_random()
++        T = curve_negate(f(u))
++        Q = curve_add(T, P)
++        if is_infinity(Q): Q = T
++        j = secrets.choice([1,2,3,4])
++        v = r(Q, j)
++        if v is not Nothing: return (u, v)
++def decode(u, v):
++    T = f(u)
++    P = curve_add(T, f(v))
++    if is_infinity(P): P = T
++    return P
++2.7 Codificación a bytes
++El código anterior permite codificar elementos de grupo en pares uniformes de elementos de campo y viceversa. Sin embargo, nuestro objetivo real es codificar y decodificar hacia/desde bytes . Cómo hacerlo depende de qué tan cerca esté el tamaño del campo p de una potencia de 2 y de una potencia de 256 .
++
++Primero, en caso de que p esté cerca de una potencia de dos ( (2 ⌈log 2 (p)⌉ -p)/√p esté cerca de 1 , o menos), los elementos de campo pueden codificarse como bytes directamente y concatenarse, posiblemente después de rellenar con bits aleatorios. En este caso, la codificación directa de elementos de campo como bits es indistinguible de uniforme.
++
++Tenga en cuenta que en esta sección, las variables representan números enteros nuevamente y no elementos de campo.
++
++P = ... # field size
++FIELD_BITS = P.bit_length()
++FIELD_BYTES = (FIELD_BITS + 7) // 8
++PAD_BITS = FIELD_BYTES*8 - FIELD_BITS
++
++def encode_bytes(P):
++    u, v = encode(P)
++    up = u + secrets.randbits(PAD_BITS) << FIELD_BITS
++    vp = v + secrets.randbits(PAD_BITS) << FIELD_BITS
++    return up.to_bytes(FIELD_BYTES, 'big') + vp.to_bytes(FIELD_BYTES, 'big')
++
++def decode_bytes(enc):
++    u = (int.from_bytes(enc[:FIELD_BYTES], 'big') & ((1 << FIELD_BITS) - 1)) % P
++    v = (int.from_bytes(enc[FIELD_BYTES:], 'big') & ((1 << FIELD_BITS) - 1)) % P
++    return decode(u, v)
++Por supuesto, en caso de que PAD_BITSsea 0 , el relleno y el enmascaramiento se pueden omitir. Si encodeestá integrado en encode_bytes, es posible una optimización adicional donde u no se genera como un elemento de campo aleatorio, sino como un número aleatorio rellenado directamente.
++
++def encode_bytes(P):
++    while True:
++        up = secrets.randbits(FIELD_BYTES * 8)
++        u = (ub & ((1 << FIELD_BITS) - 1)) % P
++        T = curve_negate(f(u))
++        Q = curve_add(T, P)
++        if is_infinity(Q): Q = T
++        j = secrets.choice([1,2,3,4])
++        v = r(Q, j)
++        if v is not Nothing:
++            vp = v + secrets.randbits(PAD_BITS) << FIELD_BITS
++            return up.to_bytes(FIELD_BITS, 'big') + vp.to_bytes(FIELD_BYTES, 'big')
++En caso de que p no esté cerca de una potencia de dos, se necesita un enfoque diferente. El siguiente código implementa el algoritmo sugerido en el artículo de Elligator Squared:
++
++P = ...   # field size
++P2 = P**2 # field size squared
++ENC_BYTES = (P2.bit_length() * 5 + 31) // 32
++ADD_RANGE = (256**ENC_BYTES) // P2
++THRESH    = (256**ENC_BYTES) % P2
++
++def encode_bytes(P):
++    u, v = encode(P)
++    w = u*P + v
++    w += secrets.randbelow(ADD_RANGE + (w < THRESH))*P2
++    return w.to_bytes(ENC_BYTES, 'big')
++
++def decode_bytes(enc):
++    w = int.from_bytes(enc, 'big') % P2
++    u, v = w >> P, w % P
++    return decode(u, v)
++3 optimizaciones
++A continuación, convertiremos estos algoritmos en una forma que sea más fácil de asignar a implementaciones de bajo nivel.
++
++3.1 Retrasar/evitar inversiones y raíces cuadradas
++Técnicas:
++
++Retrase las inversiones cuando sea posible operando con fracciones hasta que se requiera el resultado exacto.
++Evite inversiones dentro de is_square : is_square(n / d) = is_square(nd) (multiplicación con d 2 ), y is_square((n/d) 3 + b) = is_square(n 3 d + Bd 4 ) (multiplicación con d 4 ).
++Haga que los argumentos para is_square y sqrt sean idénticos si el último sigue al primero. Esto significa que las implementaciones sin el símbolo rápido de Jacobi pueden simplemente calcular y usar la raíz cuadrada directamente en su lugar.
++Multiplica con pequeñas constantes para evitar divisiones.
++Evite las subexpresiones comunes.
++def f(u):
++    s = u**2
++    # Write x1 as fraction: x1 = n / d
++    d = 1+b+s
++    n = c2*d - c1*s
++    # Compute h = g1*d**4, avoiding a division.
++    h = d*n**3 + b*d**4
++    if is_square(h):
++        # If h is square, then so is g1.
++        i = 1/d
++        x = n*i # x = n/d
++        y = sqrt(h)*i**2 # y = sqrt(g) = sqrt(h)/d**2
++    else:
++        # Update n so that x2 = n / d
++        n = -n-d
++        # And update h so that h = g2*d**4
++        h = d*n**3 + b*d**4
++        if is_square(h):
++            # If h is square, then so is g2.
++            i = 1/d
++            x = n*i # x = n/d
++            y = sqrt(h)*i**2 # y = sqrt(g) = sqrt(h)/d**2
++        else:
++            x = 1 - d**2 / (3*s)
++            y = sqrt(x**3 + b)
++    if is_odd(y) != is_odd(u):
++        y = -y
++    return (x, y)
++def r(x,y,i):
++    if i == 1 or i == 2:
++        z = 2*x + 1
++        t1 = c1 - z
++        t2 = c1 + z
++        t3 = (1+b) * t1 * t2
++        if not is_square(t3):
++            return None
++        if i == 1:
++            if t2 == 0:
++                return None
++            if t1 == 0 and is_odd(y):
++                return None
++            u = sqrt(t3) / t2
++        else:
++            if is_square((-x-1)**3 + b):
++                return None
++            u = sqrt(t3) / t1
++    else:
++        z = 2 - 4*b - 6*x
++        t1 = z**2 - 16*(b+1)**2
++        if not is_square(t1):
++            return None
++        r = sqrt(t1)
++        if i == 3:
++            t2 = z + r
++        else:
++            if r == 0:
++                return None
++            t2 = z - r
++        # t2 is now 4*s (delaying the divsion by 4)
++        if not is_square(t2):
++            return None
++        # Write x1 as a fraction: x1 = n / d
++        d = 4*(b+1) + t2
++        n = (2*(b+1)*(c1-1)) + c3*t2
++        # Compute h = g1*d**4
++        h = n**3*d + b*d**4
++        if is_square(h):
++            # If h is square then so is g1.
++            return None
++        u = sqrt(t2) / 2
++    if is_odd(y) != is_odd(u):
++        u = -u
++    return u
++3.2 Implementación desglosada
++El script test.sage contiene las dos implementaciones anteriores, además de una adicional con una operación de campo individual por línea, reutilizando variables donde sea posible. Este formato se puede traducir más directamente a una implementación de bajo nivel.
++
++4 rendimiento
++4.1 Cuentas de operaciones
++La implementación anterior requiere los siguientes recuentos de operaciones promedio:
++
++Para f() : 1 inversión, 1,5 pruebas cuadradas, 1 raíz cuadrada
++Para r() : 0.1875 inversiones, 1.5 pruebas cuadradas, 0.5 raíces cuadradas
++Para codificar () : 8.75 inversiones, 12 pruebas cuadradas, 6 raíces cuadradas
++Para decodificar() : 3 inversiones, 3 pruebas cuadradas, 2 raíces cuadradas
++Cuando no se dispone de una función de prueba cuadrática, o una que toma más de la mitad del tiempo de una raíz cuadrada, es mejor reemplazar las pruebas cuadráticas con raíces cuadradas. Como muchas pruebas cuadradas son seguidas por una raíz cuadrada real del mismo argumento si tiene éxito, ya no es necesario repetirlas. La operación cuenta para el algoritmo resultante y luego se convierte en:
++
++Para f() : 1 inversión, 1.75 raíces cuadradas
++Para r() : 0.1875 inversiones, 1.5 raíces cuadradas
++Para codificar() : 8.75 inversiones, 13 raíces cuadradas
++Para decodificar() : 3 inversiones, 3.5 raíces cuadradas
++4.2 Puntos de referencia
++En un sistema Ryzen 5950x, una implementación que sigue el procedimiento descrito en este documento usando la biblioteca libsecp256k1 toma 47,8 µs para codificar y 14,3 µs para decodificar. Como referencia, el mismo sistema necesita 0,86 µs para un inverso modular (de tiempo variable), 1,1 µs para un carácter cuadrático (de tiempo variable), 3,8 µs para una raíz cuadrada y 37,6 µs para una evaluación ECDH.
++
++5 alternativas
++En el borrador de RFC sobre hash a curvas elípticas, se analiza un enfoque alternativo: transformar puntos en una curva y 2 = x 3 + b en una curva isogénica y 2 = x 3 + a'x + b' , con a'b' ≠ 0 , y luego use la función de mapeo de Brier et al. , en esa curva. Esto tiene la ventaja de tener una función de mapeo directo más simple (y computacionalmente más barata) f . Sin embargo, la función de mapeo inverso ren este caso es computacionalmente más costoso debido a las ecuaciones de mayor grado. En general, para la codificación y decodificación de Elligator Squared, estos dos se cancelan aproximadamente, al tiempo que hacen que el algoritmo sea significativamente más complejo. También hay algo de feo en que la conversión a la curva isogénica y viceversa no es exactamente de ida y vuelta, sino que los mapas apuntan a un múltiplo (fijo) de sí mismos. Esto no es exactamente un problema en la configuración de ECDH, pero significa que las rutinas de Elligator Squared no pueden tratarse como un codificador y decodificador de caja negra.
