@@ -185,7 +185,7 @@ well (as it is equal to *x*), and thus the round-trip check will already cause *
 
 There is only one case that isn't covered by the round-trip check already:
 *r<sub>4</sub>(x,y)* may match *r<sub>3</sub>(x,y)*, which isn't covered because they both use the same forward *q<sub>3</sub>(x)*.
-This happens when either *x = (1-8B)/6* or *x = 1*.
+This happens when either *x = (-1-4B)/3* or *x = 1*.
 
 Note that failing to implement these checks will only introduce a negligible bias, as these cases are too rare to occur for cryptographically-sized curves
 when only random inputs are used like in Elligator Squared.
@@ -458,7 +458,7 @@ def r(x,y,i):
         # t2 is now 4*s (delaying the divsion by 4)
         if not is_square(t2):
             return None
-        # Write x1 as a fraction: x1 = d / n
+        # Write x1 as a fraction: x1 = n / d
         d = 4*(b+1) + t2
         n = (2*(b+1)*(c1-1)) + c3*t2
         # Compute h = g1*d**4
