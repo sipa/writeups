@@ -41,9 +41,9 @@ The exact process studied is this:
   Bitcoin has an additional constant factor (roughly $2^{32}$), but that factor is not relevant for this
   discussion, so we ignore it here.
 * The total length of a window is defined as the sum of the lengths of the blocks in it,
-  $$W_j = \sum_{i=nj}^{jn+j-1} L_i$$
+  $$W_j = \sum_{i=nj}^{jn+n-1} L_i$$
   Because the length of a window excluding its last block is relevant as well, we also define
-  $$W^\prime_j = W_j - L_{jn+j-1} = \sum_{i=nj}^{jn+j-2} L_i$$
+  $$W^\prime_j = W_j - L_{jn+n-1} = \sum_{i=nj}^{jn+n-2} L_i$$
 * The difficulty adjusts every $n$ blocks, aiming for roughly one block every
   $t$ time units.
   Specifically, $D_{j+1} = D_j tn / W^\prime_j$, or the difficulty
